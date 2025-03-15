@@ -1,120 +1,117 @@
 "use client";
+import { v4 as uuidv4 } from "uuid";
+import { generatePieces, shuffleArray } from "@/lib";
+import { isMoveKey, Piece } from "@/types";
+import React, { useEffect, useState } from "react";
 
-import { useEffect, useRef } from "react";
+const pieceSize = 100;
+const imgSize = 500;
+const cols = imgSize / pieceSize;
+const imgSrc = "/goodboi.jpg";
 
-const page = () => {
-  const sourceImgRef = useRef<null | HTMLImageElement>(null);
-  const destCanvasRef = useRef<null | HTMLCanvasElement>(null);
+const Page = () => {
+  const [pieces, SetPieces] = useState(generatePieces(imgSize, pieceSize));
+  const [currentlySelected, setCurrentlySelected] = useState<number | null>(
+    null
+  );
+  function handlePiecesChange(newPieces: Piece[]) {
+    SetPieces(newPieces);
+  }
+  function handleMoveKeys(keyName: "w" | "a" | "s" | "d") {
+    let targetIndex;
+    switch (keyName) {
+      case "w":
+        targetIndex = currentlySelected! - cols;
+        if (isMovable(targetIndex)) {
+          swap(targetIndex);
+        }
+        break;
+      case "s":
+        targetIndex = currentlySelected! + cols;
+        if (isMovable(targetIndex)) {
+          swap(targetIndex);
+        }
+        break;
+      case "a":
+        targetIndex = currentlySelected! - 1;
+        if (isMovable(targetIndex)) {
+          swap(targetIndex);
+        }
+        break;
+      case "d":
+        targetIndex = currentlySelected! + 1;
+        if (isMovable(targetIndex)) {
+          swap(targetIndex);
+        }
+        break;
+    }
+  }
+
+  function isMovable(targetIndex: number): boolean {
+    return (
+      pieces[targetIndex] !== undefined && pieces[targetIndex].isEmptyPiece
+    );
+  }
+
+  function swap(targetIndex: number) {
+    const piecesCopy = [...pieces];
+    const temp = piecesCopy[targetIndex];
+    piecesCopy[targetIndex] = piecesCopy[currentlySelected!];
+    piecesCopy[currentlySelected!] = temp;
+    handlePiecesChange(piecesCopy);
+  }
 
   useEffect(() => {
-    if (destCanvasRef.current && sourceImgRef.current) {
-      const ctx = destCanvasRef.current.getContext("2d");
-      //set canvas size same as pic size
-      console.log("natural w", sourceImgRef.current?.naturalWidth);
-      console.log("natural h", sourceImgRef.current?.naturalHeight);
+    function handleKeydown(e: KeyboardEvent) {
+      const keyName = e.key;
 
-      console.log(" w", sourceImgRef.current?.width);
-      console.log(" h", sourceImgRef.current?.height);
-
-      destCanvasRef.current.width = sourceImgRef.current?.naturalWidth;
-      destCanvasRef.current.height = sourceImgRef.current?.naturalHeight;
-
-      //no of rows, no of cols
-      const pieceSize = 100;
-      const rows = 500 / pieceSize;
-      const cols = 500 / pieceSize;
-      //get data ready - sx, sy, sw, sh, dx, dy, dw, dh
-      const pieces = [];
-      for (let r = 0; r < Array(rows).length; r++) {
-        for (let y = 0; y < Array(cols).length; y++) {
-          const sx = r * pieceSize;
-          const sy = y * pieceSize;
-          const sw = pieceSize;
-          const sh = pieceSize;
-          const dx = r * pieceSize;
-          const dy = y * pieceSize;
-          const dw = pieceSize;
-          const dh = pieceSize;
-          pieces.push({ sx, sy, sw, sh, dx, dy, dw, dh });
-        }
+      if (isMoveKey(keyName)) {
+        handleMoveKeys(keyName);
       }
-      // render
-      pieces.forEach((piece, index) => {
-        // console.log(`piece ${index}:`, {
-        //   sx: piece.sx,
-        //   sy: piece.sy,
-        //   sw: piece.sw,
-        //   sh: piece.sh,
-        //   dx: piece.dx,
-        //   dy: piece.dy,
-        //   dw: piece.dw,
-        //   dh: piece.dh,
-        // });
-        ctx?.drawImage(
-          sourceImgRef.current as HTMLImageElement,
-          piece.sx,
-          piece.sy,
-          piece.sw,
-          piece.sh,
-          piece.dx,
-          piece.dy,
-          piece.dw,
-          piece.dh
-        );
-      });
-
-      //   sx: pieces[0].sx,
-      //   sy: pieces[0].sy,
-      //   sw: pieces[0].sw,
-      //   sh: pieces[0].sh,
-      //   dx: pieces[0].dx,
-      //   dy: pieces[0].dy,
-      //   dw: pieces[0].dw,
-      //   dh: pieces[0].dh,
-      // });
-
-      // ctx?.drawImage(
-      //   sourceImgRef.current as HTMLImageElement,
-      //   pieces[0].sx,
-      //   pieces[0].sy,
-      //   pieces[0].sw,
-      //   pieces[0].sh,
-      //   pieces[0].dx,
-      //   pieces[0].dy,
-      //   pieces[0].dw,
-      //   pieces[0].dh
-      // );
-
-      // console.log(`piece 1:`, {
-      //   sx: pieces[1].sx,
-      //   sy: pieces[1].sy,
-      //   sw: pieces[1].sw,
-      //   sh: pieces[1].sh,
-      //   dx: pieces[1].dx,
-      //   dy: pieces[1].dy,
-      //   dw: pieces[1].dw,
-      //   dh: pieces[1].dh,
-      // });
-
-      // ctx?.drawImage(
-      //   sourceImgRef.current as HTMLImageElement,
-      //   pieces[1].sx,
-      //   pieces[1].sy,
-      //   pieces[1].sw,
-      //   pieces[1].sh,
-      //   pieces[1].dx,
-      //   pieces[1].dy,
-      //   pieces[1].dw,
-      //   pieces[1].dh
-      // );
     }
-  }, []);
+    if (currentlySelected) {
+      document.addEventListener("keydown", handleKeydown);
+    }
+    return () => {
+      document.removeEventListener("keydown", handleKeydown);
+    };
+  }, [currentlySelected]);
 
+  const gridCols = `grid-cols-${cols}`;
   return (
-    <div>
-      <canvas ref={destCanvasRef}></canvas>
-      <img ref={sourceImgRef} src="/goodboi.jpg" alt="idk" className="hidden" />
+    <div
+      className={`bg-white border-4 border-blue-500 w-fit h-fit grid ${gridCols} gap-2`}
+    >
+      {pieces.map((piece, index) => {
+        if (!piece.isEmptyPiece) {
+          const isSelected = currentlySelected === index;
+
+          return (
+            <div
+              key={piece.id}
+              onClick={(e) => {
+                if (currentlySelected === index) {
+                  setCurrentlySelected(null);
+                  return;
+                }
+                setCurrentlySelected(index);
+              }}
+              style={{
+                backgroundImage: `url(${imgSrc})`,
+                // backgroundSize: "500px 500px",
+                backgroundPosition: `top ${piece.bgPos?.y}px left ${piece.bgPos?.x}px`,
+              }}
+              className={`w-[100px] h-[100px] ${
+                isSelected ? "shadow shadow-red-500" : ""
+              }`}
+            />
+          );
+        } else {
+          return <div key={piece.id} className="w-[100px] h-[100px]"></div>;
+        }
+      })}
     </div>
   );
 };
-export default page;
+
+export default Page;
