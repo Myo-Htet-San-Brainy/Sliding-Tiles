@@ -3,11 +3,12 @@ import { v4 as uuidv4 } from "uuid";
 import { generatePieces, shuffleArray } from "@/lib";
 import { isMoveKey, Piece } from "@/types";
 import React, { useEffect, useState } from "react";
+import clsx from "clsx";
 
 const pieceSize = 100;
-const imgSize = 500;
-const cols = imgSize / pieceSize;
-const imgSrc = "/goodboi.jpg";
+const imgSize = 200;
+const rowsAndColsNo = imgSize / pieceSize;
+const imgSrc = "/200.jpg";
 
 const Page = () => {
   const [pieces, SetPieces] = useState(generatePieces(imgSize, pieceSize));
@@ -21,13 +22,13 @@ const Page = () => {
     let targetIndex;
     switch (keyName) {
       case "w":
-        targetIndex = currentlySelected! - cols;
+        targetIndex = currentlySelected! - rowsAndColsNo;
         if (isMovable(targetIndex)) {
           swap(targetIndex);
         }
         break;
       case "s":
-        targetIndex = currentlySelected! + cols;
+        targetIndex = currentlySelected! + rowsAndColsNo;
         if (isMovable(targetIndex)) {
           swap(targetIndex);
         }
@@ -48,9 +49,15 @@ const Page = () => {
   }
 
   function isMovable(targetIndex: number): boolean {
-    return (
-      pieces[targetIndex] !== undefined && pieces[targetIndex].isEmptyPiece
-    );
+    const targetPiece = pieces[targetIndex];
+
+    if (!targetPiece || !targetPiece.isEmptyPiece) return false;
+
+    if (targetIndex === pieces.length - 2) {
+      return currentlySelected === targetIndex - rowsAndColsNo;
+    }
+
+    return true;
   }
 
   function swap(targetIndex: number) {
@@ -64,12 +71,12 @@ const Page = () => {
   useEffect(() => {
     function handleKeydown(e: KeyboardEvent) {
       const keyName = e.key;
-
+      console.log(keyName);
       if (isMoveKey(keyName)) {
         handleMoveKeys(keyName);
       }
     }
-    if (currentlySelected) {
+    if (currentlySelected !== null) {
       document.addEventListener("keydown", handleKeydown);
     }
     return () => {
@@ -77,37 +84,63 @@ const Page = () => {
     };
   }, [currentlySelected]);
 
-  const gridCols = `grid-cols-${cols}`;
   return (
     <div
-      className={`bg-white border-4 border-blue-500 w-fit h-fit grid ${gridCols} gap-2`}
+      className={clsx(" bg-blue-200 w-fit h-fit   grid", {
+        "grid-cols-2": rowsAndColsNo === 2,
+        "grid-cols-5": rowsAndColsNo === 5,
+      })}
     >
       {pieces.map((piece, index) => {
         if (!piece.isEmptyPiece) {
-          const isSelected = currentlySelected === index;
+          if (index !== pieces.length - 1) {
+            const isSelected = currentlySelected === index;
 
+            return (
+              <div
+                key={piece.id}
+                onClick={(e) => {
+                  if (currentlySelected === index) {
+                    setCurrentlySelected(null);
+                    return;
+                  }
+                  setCurrentlySelected(index);
+                }}
+                style={{
+                  backgroundImage: `url(${imgSrc})`,
+                  // backgroundSize: "500px 500px",
+                  backgroundPosition: `top ${piece.bgPos?.y}px left ${piece.bgPos?.x}px`,
+                }}
+                className={clsx("w-[100px] h-[100px] m-2", {
+                  "shadow shadow-red-500": isSelected,
+                  "mt-0": index === pieces.length - 2,
+                })}
+              />
+            );
+          } else {
+            return (
+              <div
+                key={piece.id}
+                className=" bg-black"
+                // style={{ gridArea: gridArea }}
+                style={{
+                  gridArea: clsx({
+                    "3 / 2 / 4 / span 1": rowsAndColsNo === 2,
+                    "6 / 2 / 7 / span 4": rowsAndColsNo === 5,
+                  }),
+                }}
+              ></div>
+            );
+          }
+        } else {
           return (
             <div
               key={piece.id}
-              onClick={(e) => {
-                if (currentlySelected === index) {
-                  setCurrentlySelected(null);
-                  return;
-                }
-                setCurrentlySelected(index);
-              }}
-              style={{
-                backgroundImage: `url(${imgSrc})`,
-                // backgroundSize: "500px 500px",
-                backgroundPosition: `top ${piece.bgPos?.y}px left ${piece.bgPos?.x}px`,
-              }}
-              className={`w-[100px] h-[100px] ${
-                isSelected ? "shadow shadow-red-500" : ""
-              }`}
-            />
+              className={clsx("bg-blue-200 w-[100px] h-[100px] m-2", {
+                "mt-0": index === pieces.length - 2,
+              })}
+            ></div>
           );
-        } else {
-          return <div key={piece.id} className="w-[100px] h-[100px]"></div>;
         }
       })}
     </div>

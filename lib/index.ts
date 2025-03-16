@@ -20,6 +20,10 @@ export function generatePieces(imgSize: number, pieceSize: number): Piece[] {
     id: uuidv4(),
     isEmptyPiece: true,
   });
+  shuffledPieces.push({
+    id: uuidv4(),
+    isEmptyPiece: false,
+  });
   return shuffledPieces;
 }
 
