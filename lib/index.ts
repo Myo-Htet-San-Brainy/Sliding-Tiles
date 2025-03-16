@@ -8,21 +8,19 @@ export function generatePieces(imgSize: number, pieceSize: number): Piece[] {
   const cols = imgSize / pieceSize;
   for (let r = 0; r < Array(rows).length; r++) {
     for (let c = 0; c < Array(cols).length; c++) {
-      pieces.push({
-        id: uuidv4(),
-        bgPos: { x: -c * pieceSize, y: -r * pieceSize },
-        isEmptyPiece: false,
-      });
+      if (!(r === Array(rows).length - 1 && c === Array(cols).length - 1)) {
+        pieces.push({
+          id: uuidv4(),
+          bgPos: { x: -c * pieceSize, y: -r * pieceSize },
+          isEmptyPiece: false,
+        });
+      }
     }
   }
   const shuffledPieces = shuffleArray(pieces);
   shuffledPieces.push({
     id: uuidv4(),
     isEmptyPiece: true,
-  });
-  shuffledPieces.push({
-    id: uuidv4(),
-    isEmptyPiece: false,
   });
   return shuffledPieces;
 }
