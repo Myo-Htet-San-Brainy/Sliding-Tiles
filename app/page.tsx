@@ -21,42 +21,39 @@ const Page = () => {
   function checkEmptyPiece(
     sourceIndex: number,
     dir: "ALL" | "TOP" | "LEFT" | "RIGHT" | "BOTTOM"
-  ): null | number {
-    switch (dir) {
-      case "ALL":
-        if (pieces[sourceIndex - 1]?.isEmptyPiece) {
-          return sourceIndex - 1;
-        }
-        if (pieces[sourceIndex + 1]?.isEmptyPiece) {
-          return sourceIndex + 1;
-        }
-        if (pieces[sourceIndex + rowsAndColsNo]?.isEmptyPiece) {
-          return sourceIndex + rowsAndColsNo;
-        }
-        if (pieces[sourceIndex - rowsAndColsNo]?.isEmptyPiece) {
-          return sourceIndex - rowsAndColsNo;
-        }
-        break;
-      case "TOP":
-        if (pieces[sourceIndex - rowsAndColsNo]?.isEmptyPiece) {
-          return sourceIndex - rowsAndColsNo;
-        }
-        break;
-      case "LEFT":
-        if (pieces[sourceIndex - 1]?.isEmptyPiece) {
-          return sourceIndex - 1;
-        }
-        break;
-      case "BOTTOM":
-        if (pieces[sourceIndex + rowsAndColsNo]?.isEmptyPiece) {
-          return sourceIndex + rowsAndColsNo;
-        }
-        break;
-      case "RIGHT":
-        if (pieces[sourceIndex + 1]?.isEmptyPiece) {
-          return sourceIndex + 1;
-        }
-        break;
+  ): null | {
+    targetIndex: number;
+    foundDir: "TOP" | "LEFT" | "RIGHT" | "BOTTOM";
+  } {
+    if (dir === "ALL") {
+      if (pieces[sourceIndex - 1]?.isEmptyPiece) {
+        return { targetIndex: sourceIndex - 1, foundDir: "LEFT" };
+      }
+      if (pieces[sourceIndex + 1]?.isEmptyPiece) {
+        return { targetIndex: sourceIndex + 1, foundDir: "RIGHT" };
+      }
+      if (pieces[sourceIndex + rowsAndColsNo]?.isEmptyPiece) {
+        return { targetIndex: sourceIndex + rowsAndColsNo, foundDir: "BOTTOM" };
+      }
+      if (pieces[sourceIndex - rowsAndColsNo]?.isEmptyPiece) {
+        return { targetIndex: sourceIndex - rowsAndColsNo, foundDir: "TOP" };
+      }
+    } else {
+      if (dir === "TOP" && pieces[sourceIndex - rowsAndColsNo]?.isEmptyPiece) {
+        return { targetIndex: sourceIndex - rowsAndColsNo, foundDir: "TOP" };
+      }
+      if (dir === "LEFT" && pieces[sourceIndex - 1]?.isEmptyPiece) {
+        return { targetIndex: sourceIndex - 1, foundDir: "LEFT" };
+      }
+      if (
+        dir === "BOTTOM" &&
+        pieces[sourceIndex + rowsAndColsNo]?.isEmptyPiece
+      ) {
+        return { targetIndex: sourceIndex + rowsAndColsNo, foundDir: "BOTTOM" };
+      }
+      if (dir === "RIGHT" && pieces[sourceIndex + 1]?.isEmptyPiece) {
+        return { targetIndex: sourceIndex + 1, foundDir: "RIGHT" };
+      }
     }
     return null;
   }
@@ -69,47 +66,48 @@ const Page = () => {
     handlePiecesChange(piecesCopy);
   }
 
+  function convertDirToPosToTranslate(
+    dir: "TOP" | "LEFT" | "RIGHT" | "BOTTOM"
+  ): { x: number; y: number } {
+    const directionMap: Record<
+      "TOP" | "LEFT" | "RIGHT" | "BOTTOM",
+      { x: number; y: number }
+    > = {
+      TOP: { x: 0, y: -100 },
+      LEFT: { x: -100, y: 0 },
+      RIGHT: { x: 100, y: 0 },
+      BOTTOM: { x: 0, y: 100 },
+    };
+
+    return directionMap[dir];
+  }
+
   function handlePieceClick(
     clickedPiece: HTMLDivElement,
     clickedPieceIndex: number
   ) {
     //check empty piece
-    const targetIndex = checkEmptyPiece(clickedPieceIndex, "ALL");
-    if (targetIndex === null) {
+    const result = checkEmptyPiece(clickedPieceIndex, "ALL");
+    if (result === null) {
       return;
     }
     //transition
-    if (!emptyPieceRef.current) {
-      console.log(
-        "empty piece ref is null, thus no way to get x and y of empty piece, thus no way to transition to that point"
-      );
-      return;
-    }
-    const emptyPieceCurrentX = emptyPieceRef.current.getBoundingClientRect().x;
-    const emptyPieceCurrentY = emptyPieceRef.current.getBoundingClientRect().y;
-    const animation = moveToPoint(
-      clickedPiece,
-      emptyPieceCurrentX,
-      emptyPieceCurrentY
-    );
+    const pos = convertDirToPosToTranslate(result.foundDir);
+    const animation = moveToPoint(clickedPiece, pos.x, pos.y);
     //callback for state update
     animation.onfinish = () => {
       console.log("Animation completed");
       // Your state update code here
-      swap(clickedPieceIndex, targetIndex);
+      swap(clickedPieceIndex, result.targetIndex);
     };
   }
 
   function moveToPoint(element: HTMLElement, x: number, y: number): Animation {
     const animation = element.animate(
-      [
-        { transform: getComputedStyle(element).transform || "none" },
-        { transform: `translate(${x}px, ${y}px)` },
-      ],
+      [{ transform: `translate(${x}px, ${y}px)` }],
       {
         duration: 500,
         easing: "ease",
-        fill: "forwards",
       }
     );
     return animation;
