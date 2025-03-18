@@ -2,7 +2,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { generatePieces, shuffleArray } from "@/lib";
 import { isMoveKey, Piece } from "@/types";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 
 const pieceSize = 100;
@@ -12,6 +12,7 @@ const imgSrc = "/300.jpg";
 
 const Page = () => {
   const [pieces, SetPieces] = useState(generatePieces(imgSize, pieceSize));
+  const emptyPieceRef = useRef<null | HTMLDivElement>(null);
   function handlePiecesChange(newPieces: Piece[]) {
     SetPieces(newPieces);
   }
@@ -68,15 +69,52 @@ const Page = () => {
     handlePiecesChange(piecesCopy);
   }
 
-  function handlePieceClick(clickedPieceIndex: number) {
+  function handlePieceClick(
+    clickedPiece: HTMLDivElement,
+    clickedPieceIndex: number
+  ) {
+    //check empty piece
     const targetIndex = checkEmptyPiece(clickedPieceIndex, "ALL");
-    if (targetIndex !== null) {
-      swap(clickedPieceIndex, targetIndex);
+    if (targetIndex === null) {
+      return;
     }
+    //transition
+    if (!emptyPieceRef.current) {
+      console.log(
+        "empty piece ref is null, thus no way to get x and y of empty piece, thus no way to transition to that point"
+      );
+      return;
+    }
+    const emptyPieceCurrentX = emptyPieceRef.current.getBoundingClientRect().x;
+    const emptyPieceCurrentY = emptyPieceRef.current.getBoundingClientRect().y;
+    const animation = moveToPoint(
+      clickedPiece,
+      emptyPieceCurrentX,
+      emptyPieceCurrentY
+    );
+    //callback for state update
+    animation.onfinish = () => {
+      console.log("Animation completed");
+      // Your state update code here
+      swap(clickedPieceIndex, targetIndex);
+    };
   }
 
-  const p = 8;
-  const borderThickness = 1;
+  function moveToPoint(element: HTMLElement, x: number, y: number): Animation {
+    const animation = element.animate(
+      [
+        { transform: getComputedStyle(element).transform || "none" },
+        { transform: `translate(${x}px, ${y}px)` },
+      ],
+      {
+        duration: 500,
+        easing: "ease",
+        fill: "forwards",
+      }
+    );
+    return animation;
+  }
+
   return (
     <div className="h-screen grid place-items-center">
       <div
@@ -155,7 +193,7 @@ const Page = () => {
             return (
               <div
                 key={piece.id}
-                onClick={() => handlePieceClick(index)}
+                onClick={(e) => handlePieceClick(e.currentTarget, index)}
                 style={{
                   backgroundImage: `url(${imgSrc})`,
                   // backgroundSize: "500px 500px",
@@ -169,30 +207,9 @@ const Page = () => {
             return (
               <div
                 key={piece.id}
+                ref={emptyPieceRef}
                 className={clsx("relative bg-transparent w-[100px] h-[100px")}
               >
-                {/* top border */}
-
-                {/* <div
-                className={clsx("absolute -top-[1px] w-full h-[1px]", {
-                  hidden: !isTopMostPiece,
-                })}
-                style={{ boxShadow: "0px 2px 2px 0px rgba(45,45,51,1)" }}
-              /> */}
-                {/* left border */}
-                {/* <div
-                className={clsx("absolute -left-[1px] h-full w-[1px]", {
-                  hidden: !isLeftMostPiece,
-                })}
-                style={{ boxShadow: "2px 0px 2px 0px rgba(45,45,51,1)" }}
-              /> */}
-                {/* right border */}
-                {/* <div
-                className={clsx("absolute -right-[1px] h-full w-[1px]", {
-                  hidden: !isRightMostPiece,
-                })}
-                style={{ boxShadow: "-2px 0px 2px 0px rgba(45,45,51,1)" }}
-              /> */}
                 {/* bottom slide tab */}
                 <div
                   className={clsx(
