@@ -64,7 +64,7 @@ const Page = () => {
           className="z-30 absolute h-[10px] -left-[10px]  -translate-y-[calc(100%)] bg-[#03a9fc]"
           style={{
             width: `calc(100% + 20px)`,
-            boxShadow: "0px 2px 5px -3px rgba(52,53,56,1)",
+            boxShadow: "0px 4px 3px -3px rgba(52,53,56,1)",
           }}
         />
         {/* BOTTOM */}
@@ -89,6 +89,23 @@ const Page = () => {
           style={{
             height: `calc(100%)`,
             boxShadow: "-2px 0px 5px -3px rgba(52,53,56,1)",
+          }}
+        />
+        {/* Sliders */}
+        {/* TOP */}
+        <div
+          className="z-20 absolute  h-[4px] bg-[#03a9fc]"
+          style={{
+            width: `calc(100%)`,
+            boxShadow: " rgb(52, 53, 56) 0px 1px 3px 0px",
+          }}
+        />
+        {/* LEFT */}
+        <div
+          className="z-20 absolute top-[4px] w-[4px] bg-[#03a9fc]"
+          style={{
+            height: `calc(100% - 8px)`,
+            boxShadow: " rgb(52, 53, 56) -1px 0px 3px 0px",
           }}
         />
         {/* PIECES */}
