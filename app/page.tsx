@@ -16,18 +16,46 @@ const Page = () => {
     SetPieces(newPieces);
   }
 
-  function checkMovable(clickedPieceIndex: number): null | number {
-    if (pieces[clickedPieceIndex - 1]?.isEmptyPiece) {
-      return clickedPieceIndex - 1;
-    }
-    if (pieces[clickedPieceIndex + 1]?.isEmptyPiece) {
-      return clickedPieceIndex + 1;
-    }
-    if (pieces[clickedPieceIndex + rowsAndColsNo]?.isEmptyPiece) {
-      return clickedPieceIndex + rowsAndColsNo;
-    }
-    if (pieces[clickedPieceIndex - rowsAndColsNo]?.isEmptyPiece) {
-      return clickedPieceIndex - rowsAndColsNo;
+  //return null if empty piece is not found in given dir
+  function checkEmptyPiece(
+    sourceIndex: number,
+    dir: "ALL" | "TOP" | "LEFT" | "RIGHT" | "BOTTOM"
+  ): null | number {
+    switch (dir) {
+      case "ALL":
+        if (pieces[sourceIndex - 1]?.isEmptyPiece) {
+          return sourceIndex - 1;
+        }
+        if (pieces[sourceIndex + 1]?.isEmptyPiece) {
+          return sourceIndex + 1;
+        }
+        if (pieces[sourceIndex + rowsAndColsNo]?.isEmptyPiece) {
+          return sourceIndex + rowsAndColsNo;
+        }
+        if (pieces[sourceIndex - rowsAndColsNo]?.isEmptyPiece) {
+          return sourceIndex - rowsAndColsNo;
+        }
+        break;
+      case "TOP":
+        if (pieces[sourceIndex - rowsAndColsNo]?.isEmptyPiece) {
+          return sourceIndex - rowsAndColsNo;
+        }
+        break;
+      case "LEFT":
+        if (pieces[sourceIndex - 1]?.isEmptyPiece) {
+          return sourceIndex - 1;
+        }
+        break;
+      case "BOTTOM":
+        if (pieces[sourceIndex + rowsAndColsNo]?.isEmptyPiece) {
+          return sourceIndex + rowsAndColsNo;
+        }
+        break;
+      case "RIGHT":
+        if (pieces[sourceIndex + 1]?.isEmptyPiece) {
+          return sourceIndex + 1;
+        }
+        break;
     }
     return null;
   }
@@ -41,7 +69,7 @@ const Page = () => {
   }
 
   function handlePieceClick(clickedPieceIndex: number) {
-    const targetIndex = checkMovable(clickedPieceIndex);
+    const targetIndex = checkEmptyPiece(clickedPieceIndex, "ALL");
     if (targetIndex !== null) {
       swap(clickedPieceIndex, targetIndex);
     }
@@ -56,15 +84,15 @@ const Page = () => {
           "grid-cols-3": rowsAndColsNo === 3,
           "grid-cols-5": rowsAndColsNo === 5,
         })}
-        // style={{ padding: `${p}px` }}
+        style={{ boxShadow: "8px 8px 35px 6px rgba(0,0,0,0.75)" }}
       >
         {/* BORDERS */}
         {/* TOP */}
         <div
-          className="z-30 absolute h-[10px] -left-[10px]  -translate-y-[calc(100%)] bg-[#03a9fc]"
+          className="z-30 absolute h-[10px] -left-[10px] -translate-y-[calc(100%)] bg-[#03a9fc]"
           style={{
-            width: `calc(100% + 20px)`,
-            boxShadow: "0px 4px 3px -3px rgba(52,53,56,1)",
+            width: "calc(100% + 20px)",
+            boxShadow: "rgb(110, 110, 110) 0px 4px 3px -3px",
           }}
         />
         {/* BOTTOM */}
@@ -79,8 +107,8 @@ const Page = () => {
         <div
           className="z-30 absolute w-[10px] -translate-x-[calc(100%)] bg-[#03a9fc]"
           style={{
-            height: `calc(100%)`,
-            boxShadow: "2px 0px 5px -3px rgba(52,53,56,1)",
+            height: "calc(100%)",
+            boxShadow: "2px 0px 5px -3px rgba(40,40,40,1)",
           }}
         />
         {/* RIGHT */}
@@ -94,18 +122,18 @@ const Page = () => {
         {/* Sliders */}
         {/* TOP */}
         <div
-          className="z-20 absolute  h-[4px] bg-[#03a9fc]"
+          className="z-20 absolute h-[4px] bg-[#03a9fc]"
           style={{
-            width: `calc(100%)`,
-            boxShadow: " rgb(52, 53, 56) 0px 1px 3px 0px",
+            width: "calc(100%)",
+            boxShadow: "rgb(80, 80, 80) 0px 1px 3px 0px",
           }}
         />
         {/* LEFT */}
         <div
           className="z-20 absolute top-[4px] w-[4px] bg-[#03a9fc]"
           style={{
-            height: `calc(100% - 8px)`,
-            boxShadow: " rgb(52, 53, 56) -1px 0px 3px 0px",
+            height: "calc(100% - 4px)",
+            boxShadow: "rgb(80, 80, 80) 1px 0px 3px 0px",
           }}
         />
         {/* PIECES */}
@@ -116,6 +144,14 @@ const Page = () => {
             index !== 0 && (index + 1) % rowsAndColsNo === 0;
 
           if (!piece.isEmptyPiece) {
+            const isEmptyPieceBelow = checkEmptyPiece(index, "BOTTOM") !== null;
+            const isEmptyPieceOnRight =
+              checkEmptyPiece(index, "RIGHT") !== null;
+            const boxShadow = isEmptyPieceBelow
+              ? "rgb(80, 80, 80) 0px 5px 6px -2px"
+              : isEmptyPieceOnRight
+              ? "rgb(80, 80, 80) 5px 0px 6px -2px"
+              : "";
             return (
               <div
                 key={piece.id}
@@ -124,6 +160,7 @@ const Page = () => {
                   backgroundImage: `url(${imgSrc})`,
                   // backgroundSize: "500px 500px",
                   backgroundPosition: `top ${piece.bgPos?.y}px left ${piece.bgPos?.x}px`,
+                  boxShadow: boxShadow,
                 }}
                 className={clsx("z-50 w-[100px] h-[100px] ")}
               />
@@ -165,7 +202,7 @@ const Page = () => {
                     }
                   )}
                   style={{
-                    boxShadow: " 0px 8px 17px 0px rgba(46,74,117,1)",
+                    boxShadow: "0px 2px 8px 0px rgba(80,80,80,1)",
                   }}
                 ></div>
                 {/* right slide tab */}
@@ -177,7 +214,7 @@ const Page = () => {
                     }
                   )}
                   style={{
-                    boxShadow: " 8px 0px 17px 0px rgba(46,74,117,1)",
+                    boxShadow: " 2px 0px 8px 0px rgba(80,80,80,1)",
                   }}
                 ></div>
               </div>
