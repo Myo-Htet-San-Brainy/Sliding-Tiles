@@ -1,5 +1,6 @@
 export interface Piece {
   id: string;
+  correctIndex: number;
   bgPos?: {
     x: number;
     y: number;
