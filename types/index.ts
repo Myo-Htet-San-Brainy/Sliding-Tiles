@@ -4,6 +4,8 @@ export interface Piece {
     x: number;
     y: number;
   };
+  prevPos?: { x: number; y: number };
+  movedDir?: "TOP" | "BOTTOM" | "LEFT" | "RIGHT";
   isEmptyPiece: boolean;
 }
 

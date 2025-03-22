@@ -4,6 +4,7 @@ import { generatePieces, shuffleArray } from "@/lib";
 import { isMoveKey, Piece } from "@/types";
 import React, { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
+import { motion } from "motion/react";
 
 const pieceSize = 100;
 const imgSize = 300;
@@ -12,7 +13,8 @@ const imgSrc = "/300.jpg";
 
 const Page = () => {
   const [pieces, SetPieces] = useState(generatePieces(imgSize, pieceSize));
-  const emptyPieceRef = useRef<null | HTMLDivElement>(null);
+  const [clickedPieceId, setClickedPieceId] = useState<null | string>();
+  const piecesRef = useRef<Record<string, HTMLDivElement>>({});
   function handlePiecesChange(newPieces: Piece[]) {
     SetPieces(newPieces);
   }
@@ -58,11 +60,10 @@ const Page = () => {
     return null;
   }
 
-  function swap(sourceIndex: number, targetIndex: number) {
+  function swap(sourceIndex: number, targetIndex: number, source: Piece) {
     const piecesCopy = [...pieces];
-    const temp = piecesCopy[targetIndex];
-    piecesCopy[targetIndex] = piecesCopy[sourceIndex];
-    piecesCopy[sourceIndex] = temp;
+    piecesCopy[sourceIndex] = piecesCopy[targetIndex];
+    piecesCopy[targetIndex] = source;
     handlePiecesChange(piecesCopy);
   }
 
@@ -82,34 +83,45 @@ const Page = () => {
     return directionMap[dir];
   }
 
-  function handlePieceClick(
-    clickedPiece: HTMLDivElement,
-    clickedPieceIndex: number
-  ) {
+  function handlePieceClick(clickedPieceId: string, clickedPieceIndex: number) {
     //check empty piece
     const result = checkEmptyPiece(clickedPieceIndex, "ALL");
     if (result === null) {
       return;
     }
-    //transition
-    const pos = convertDirToPosToTranslate(result.foundDir);
-    const animation = moveToPoint(clickedPiece, pos.x, pos.y);
-    //callback for state update
-    animation.onfinish = () => {
-      console.log("Animation completed");
-      // Your state update code here
-      swap(clickedPieceIndex, result.targetIndex);
-    };
+    setClickedPieceId(clickedPieceId);
+    //record
+    const source = pieces[clickedPieceIndex];
+    source.movedDir = result.foundDir;
+    //swap
+    swap(clickedPieceIndex, result.targetIndex, source);
   }
 
-  function moveToPoint(element: HTMLElement, x: number, y: number): Animation {
-    const animation = element.animate(
-      [{ transform: `translate(${x}px, ${y}px)` }],
-      {
-        duration: 500,
-        easing: "ease",
-      }
-    );
+  useEffect(() => {
+    if (!clickedPieceId) {
+      return;
+    }
+    const el = piecesRef.current[clickedPieceId];
+    const piece = pieces.find((pc) => pc.id === clickedPieceId);
+    const { x, y } = convertDirToPosToTranslate(piece?.movedDir!);
+    // console.log(piece?.movedDir);
+    // console.log(convertDirToPosToTranslate(piece?.movedDir!));
+
+    const keyframes = [
+      // First keyframe: Invert (translate back to initial position)
+      { transform: `translate(${-x}px, ${-y}px)`, transition: "none" },
+      // Second keyframe: Play (translate to new position)
+      { transform: `translate(0px, 0px)` },
+    ];
+    // console.log(keyframes);
+    moveToPoint(el, keyframes);
+    setClickedPieceId(null);
+  }, [pieces]);
+
+  function moveToPoint(element: HTMLElement, keyframes: any[]): Animation {
+    const animation = element.animate(keyframes, {
+      duration: 300,
+    });
     return animation;
   }
 
@@ -125,7 +137,7 @@ const Page = () => {
         {/* BORDERS */}
         {/* TOP */}
         <div
-          className="z-30 absolute h-[10px] -left-[10px] -translate-y-[calc(100%)] bg-[#03a9fc]"
+          className="z-40 absolute h-[10px] -left-[10px] -translate-y-[calc(100%)] bg-[#03a9fc]"
           style={{
             width: "calc(100% + 20px)",
             boxShadow: "rgb(110, 110, 110) 0px 4px 3px -3px",
@@ -133,7 +145,7 @@ const Page = () => {
         />
         {/* BOTTOM */}
         <div
-          className="z-30 absolute h-[10px] -left-[10px] bottom-0 translate-y-[calc(100%)] bg-[#03a9fc]"
+          className="z-40 absolute h-[10px] -left-[10px] bottom-0 translate-y-[calc(100%)] bg-[#03a9fc]"
           style={{
             width: `calc(100% + 20px)`,
             boxShadow: "0px -2px 5px -3px rgba(52,53,56,1)",
@@ -141,7 +153,7 @@ const Page = () => {
         />
         {/* LEFT */}
         <div
-          className="z-30 absolute w-[10px] -translate-x-[calc(100%)] bg-[#03a9fc]"
+          className="z-40 absolute w-[10px] -translate-x-[calc(100%)] bg-[#03a9fc]"
           style={{
             height: "calc(100%)",
             boxShadow: "2px 0px 5px -3px rgba(40,40,40,1)",
@@ -149,7 +161,7 @@ const Page = () => {
         />
         {/* RIGHT */}
         <div
-          className="z-30 absolute w-[10px] right-0 translate-x-[calc(100%)] bg-[#03a9fc]"
+          className="z-40 absolute w-[10px] right-0 translate-x-[calc(100%)] bg-[#03a9fc]"
           style={{
             height: `calc(100%)`,
             boxShadow: "-2px 0px 5px -3px rgba(52,53,56,1)",
@@ -183,56 +195,52 @@ const Page = () => {
             const isEmptyPieceBelow = checkEmptyPiece(index, "BOTTOM") !== null;
             const isEmptyPieceOnRight =
               checkEmptyPiece(index, "RIGHT") !== null;
-            const boxShadow = isEmptyPieceBelow
-              ? "rgb(80, 80, 80) 0px 5px 6px -2px"
-              : isEmptyPieceOnRight
-              ? "rgb(80, 80, 80) 5px 0px 6px -2px"
-              : "";
+
             return (
               <div
-                key={piece.id}
-                onClick={(e) => handlePieceClick(e.currentTarget, index)}
-                style={{
-                  backgroundImage: `url(${imgSrc})`,
-                  // backgroundSize: "500px 500px",
-                  backgroundPosition: `top ${piece.bgPos?.y}px left ${piece.bgPos?.x}px`,
-                  boxShadow: boxShadow,
+                ref={(el) => {
+                  piecesRef.current[piece.id] = el!;
                 }}
-                className={clsx("z-50 w-[100px] h-[100px] ")}
-              />
+                key={piece.id}
+                className="relative w-[100px] h-[100px]"
+                onClick={(e) => handlePieceClick(piece.id, index)}
+              >
+                <div
+                  style={{
+                    backgroundImage: `url(${imgSrc})`,
+                    // backgroundSize: "500px 500px",
+                    backgroundPosition: `top ${piece.bgPos?.y}px left ${piece.bgPos?.x}px`,
+                    boxShadow: "rgb(80, 80, 80) 5px 5px 6px -2px",
+                  }}
+                  className={clsx("relative z-30 h-full ")}
+                />
+
+                {/* bottom slide tab */}
+                {/* <div
+                  className={clsx(
+                    "z-20 absolute bottom-0 left-[50%] -translate-x-[50%] translate-y-[50%]  w-14 h-4 rounded-4xl"
+                  )}
+                  style={{
+                    boxShadow: "0px 2px 8px 0px rgba(80,80,80,1)",
+                  }}
+                ></div> */}
+                {/* right slide tab */}
+                {/* <div
+                  className={clsx(
+                    "z-20 absolute top-[50%] -translate-y-[50%] right-0 translate-x-[50%]    w-4 h-14 rounded-4xl"
+                  )}
+                  style={{
+                    boxShadow: " 2px 0px 8px 0px rgba(80,80,80,1)",
+                  }}
+                ></div> */}
+              </div>
             );
           } else {
             return (
               <div
                 key={piece.id}
-                ref={emptyPieceRef}
-                className={clsx("relative bg-transparent w-[100px] h-[100px")}
-              >
-                {/* bottom slide tab */}
-                <div
-                  className={clsx(
-                    "absolute left-[50%] -translate-x-[50%] -translate-y-[50%]     w-14 h-4 rounded-4xl",
-                    {
-                      hidden: isTopMostPiece,
-                    }
-                  )}
-                  style={{
-                    boxShadow: "0px 2px 8px 0px rgba(80,80,80,1)",
-                  }}
-                ></div>
-                {/* right slide tab */}
-                <div
-                  className={clsx(
-                    "absolute top-[50%] -translate-y-[50%] -translate-x-[50%]    w-4 h-14 rounded-4xl",
-                    {
-                      hidden: isLeftMostPiece,
-                    }
-                  )}
-                  style={{
-                    boxShadow: " 2px 0px 8px 0px rgba(80,80,80,1)",
-                  }}
-                ></div>
-              </div>
+                className={clsx(" bg-transparent w-[100px] h-[100px")}
+              ></div>
             );
           }
         })}
