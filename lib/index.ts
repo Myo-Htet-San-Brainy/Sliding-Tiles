@@ -41,9 +41,13 @@ export function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function moveToPoint(element: HTMLElement, keyframes: any[]): Animation {
+export function moveToPoint(
+  element: HTMLElement,
+  keyframes: any[],
+  duration: number
+): Animation {
   const animation = element.animate(keyframes, {
-    duration: 300,
+    duration: duration,
   });
   return animation;
 }

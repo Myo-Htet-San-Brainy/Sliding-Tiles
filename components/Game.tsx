@@ -89,7 +89,7 @@ const Game: React.FC<Game> = ({
       { transform: `translate(0px, 0px)` },
     ];
     // console.log(keyframes);
-    const animation = moveToPoint(el, keyframes);
+    const animation = moveToPoint(el, keyframes, 100);
     animation.onfinish = function () {
       checkFinish(pieces) && setIsFinished();
     };
@@ -162,9 +162,10 @@ const Game: React.FC<Game> = ({
         //   index !== 0 && (index + 1) % rowsAndColsNo === 0;
 
         if (!piece.isEmptyPiece) {
-          // const isEmptyPieceBelow = checkEmptyPiece(index, "BOTTOM") !== null;
-          // const isEmptyPieceOnRight =
-          //   checkEmptyPiece(index, "RIGHT") !== null;
+          const isEmptyPieceBelow =
+            checkEmptyPiece(pieces, index, "BOTTOM", rowsAndColsNo) !== null;
+          const isEmptyPieceOnRight =
+            checkEmptyPiece(pieces, index, "RIGHT", rowsAndColsNo) !== null;
 
           return (
             <div
@@ -186,23 +187,28 @@ const Game: React.FC<Game> = ({
               />
 
               {/* bottom slide tab */}
-              <div
-                className={clsx(
-                  "z-20 absolute bottom-0 left-[50%] -translate-x-[50%] translate-y-[50%]  w-14 h-4 rounded-4xl"
-                )}
-                style={{
-                  boxShadow: "0px 2px 8px 0px rgba(80,80,80,1)",
-                }}
-              ></div>
+              {
+                <div
+                  className={clsx(
+                    "z-20 absolute bottom-0 left-[50%] -translate-x-[50%] translate-y-[50%]  w-14 h-4 rounded-4xl"
+                  )}
+                  style={{
+                    boxShadow: "0px 2px 8px 0px rgba(80,80,80,1)",
+                  }}
+                ></div>
+              }
+
               {/* right slide tab */}
-              <div
-                className={clsx(
-                  "z-20 absolute top-[50%] -translate-y-[50%] right-0 translate-x-[50%]    w-4 h-14 rounded-4xl"
-                )}
-                style={{
-                  boxShadow: " 2px 0px 8px 0px rgba(80,80,80,1)",
-                }}
-              ></div>
+              {
+                <div
+                  className={clsx(
+                    "z-20 absolute top-[50%] -translate-y-[50%] right-0 translate-x-[50%]    w-4 h-14 rounded-4xl"
+                  )}
+                  style={{
+                    boxShadow: " 2px 0px 8px 0px rgba(80,80,80,1)",
+                  }}
+                ></div>
+              }
             </div>
           );
         } else {
